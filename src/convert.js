@@ -9,6 +9,37 @@ export const PRESETS = {
   light: { label: '軽量', quality: QUALITY_MEDIUM, crf: 28 },
 };
 
+// MP4/MOV の moov > mvhd から作成日時を読む（先頭からボックスヘッダだけを辿るので軽い）
+async function readMvhdCreation(file) {
+  try {
+    let pos = 0;
+    while (pos + 8 <= file.size) {
+      const dv = new DataView(await file.slice(pos, pos + 16).arrayBuffer());
+      let size = dv.getUint32(0);
+      const type = String.fromCharCode(dv.getUint8(4), dv.getUint8(5), dv.getUint8(6), dv.getUint8(7));
+      let header = 8;
+      if (size === 1) { size = Number(dv.getBigUint64(8)); header = 16; }
+      else if (size === 0) size = file.size - pos;
+      if (type === 'moov') {
+        const m = new DataView(await file.slice(pos + header, pos + header + 32).arrayBuffer());
+        if (String.fromCharCode(m.getUint8(4), m.getUint8(5), m.getUint8(6), m.getUint8(7)) !== 'mvhd') return null;
+        const secs = m.getUint8(8) === 1 ? Number(m.getBigUint64(12)) : m.getUint32(12);
+        const d = new Date((secs - 2082844800) * 1000);
+        return secs > 0 && d.getUTCFullYear() > 1990 ? d : null;
+      }
+      if (size < 8) return null;
+      pos += size;
+    }
+  } catch { /* 読めなければ次の候補へ */ }
+  return null;
+}
+
+// PXL_YYYYMMDD_HHMMSSmmm（UTC）から撮影日時を推定
+function dateFromName(name) {
+  const m = /(\d{4})(\d{2})(\d{2})[_-](\d{2})(\d{2})(\d{2})/.exec(name);
+  return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])) : null;
+}
+
 export const outputName = (name) => name.replace(/\.[^.]+$/, '') + '_h264.mp4';
 
 export function webCodecsSupported() {
@@ -21,6 +52,7 @@ export function startWebCodecs(file, presetKey, onProgress) {
   let conversion = null;
   let canceled = false;
   const promise = (async () => {
+    const created = await readMvhdCreation(file);
     const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
     const output = new Output({
       format: new Mp4OutputFormat({ fastStart: 'in-memory' }),
@@ -35,6 +67,8 @@ export function startWebCodecs(file, presetKey, onProgress) {
       input, output,
       video,
       audio: { codec: 'aac' },
+      // 元のメタデータ（位置情報・日付などの raw タグ含む）を引き継ぎ、作成日時も保持する
+      tags: (t) => ({ ...t, creationTime: created ?? t.creationTime ?? t.date ?? dateFromName(file.name) ?? new Date(file.lastModified) }),
       showWarnings: false,
     });
     if (canceled) throw new Error('canceled');

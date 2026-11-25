@@ -21,7 +21,7 @@ export function startFfmpeg(file, presetKey, onProgress, onStatus) {
     await ffmpeg.writeFile('in', await fetchFile(file));
     const code = await ffmpeg.exec([
       '-i', 'in', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', String(PRESETS[presetKey].crf),
-      '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-movflags', '+faststart', 'out.mp4',
+      '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-map_metadata', '0', '-movflags', '+faststart+use_metadata_tags', 'out.mp4',
     ]);
     if (code !== 0) throw new Error('ffmpeg が失敗しました (code ' + code + ')');
     const data = await ffmpeg.readFile('out.mp4');
