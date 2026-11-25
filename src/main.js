@@ -1,4 +1,5 @@
 import { PRESETS, outputName, startWebCodecs, webCodecsSupported } from './convert.js';
+import { zipSync } from 'fflate';
 import './style.css';
 
 const $ = (s) => document.querySelector(s);
@@ -13,6 +14,37 @@ picker.addEventListener('change', () => { addFiles(picker.files); picker.value =
 drop.addEventListener('drop', (ev) => addFiles(ev.dataTransfer.files));
 
 const queue = [];
+const results = []; // 完了した { name, blob }
+let total = 0;
+
+function updateBulk() {
+  $('#bulk').hidden = total < 2;
+  $('#bulkInfo').textContent = `${total} 件中 ${results.length} 件が変換完了`;
+  $('#bulkBtn').disabled = results.length === 0;
+}
+
+$('#bulkBtn').addEventListener('click', async () => {
+  const btn = $('#bulkBtn');
+  btn.disabled = true; btn.textContent = 'ZIP を作成中…';
+  try {
+    const files = {}, used = new Set();
+    for (const { name, blob } of results) {
+      let n = name, i = 2;
+      while (used.has(n)) n = name.replace(/\.mp4$/, `_${i++}.mp4`);
+      used.add(n);
+      files[n] = new Uint8Array(await blob.arrayBuffer());
+    }
+    // 動画は圧縮済みなので無圧縮(level 0)でまとめる
+    const zip = zipSync(files, { level: 0 });
+    const url = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
+    Object.assign(document.createElement('a'), { href: url, download: 'converted_videos.zip' }).click();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) {
+    alert('ZIP の作成に失敗しました: ' + e.message);
+  } finally {
+    btn.textContent = 'まとめてZIPでダウンロード'; updateBulk();
+  }
+});
 let running = false;
 
 function addFiles(files) {
@@ -24,7 +56,9 @@ function addFiles(files) {
     el.querySelector('.name').textContent = file.name;
     list.append(el);
     queue.push({ file, el, preset: preset.value });
+    total++;
   }
+  updateBulk();
   pump();
 }
 
@@ -60,6 +94,8 @@ async function run({ file, el, preset }) {
       blob = await tryJob(() => startFfmpeg(file, preset, (p) => { bar.value = p; status.textContent = `互換モード変換中 ${Math.round(p * 100)}%`; }, (s) => { status.textContent = s; }));
     }
     bar.value = 1;
+    results.push({ name: outputName(file.name), blob });
+    updateBulk();
     const url = URL.createObjectURL(blob);
     const a = Object.assign(document.createElement('a'), { href: url, download: outputName(file.name), textContent: `ダウンロード (${(blob.size / 1048576).toFixed(1)} MB)`, className: 'dl' });
     const v = Object.assign(document.createElement('video'), { src: url, controls: true, playsInline: true, muted: true });

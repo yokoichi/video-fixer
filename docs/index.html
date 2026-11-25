@@ -1,15 +1,19 @@
 <!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Video Fixer – VP9 mp4 を H.264 に変換</title>  <script type="module" crossorigin src="./assets/index-DmiJ3Peu.js"></script>
+<title>Google Pixel to mac Video Fixer – VP9 mp4 を H.264 に変換</title>  <script type="module" crossorigin src="./assets/index-Dq4KOE29.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-BrVfq_k5.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-_-XmQWQK.css">
+  <link rel="stylesheet" crossorigin href="./assets/index-DLmleAhV.css">
 </head>
 <body>
-<h1>Video Fixer</h1>
+<h1>Google Pixel to mac Video Fixer</h1>
 <p>Pixel / Google フォトの VP9 mp4 を、Mac・iPhone で再生できる H.264 + AAC の mp4 に変換します。動画はブラウザ内で処理され、サーバーには送信されません。</p>
 <div class="row"><label>画質 <select id="preset"></select></label></div>
 <div id="drop">ここに動画をドラッグ＆ドロップ、またはクリックして選択<br><small>複数ファイル可</small></div>
 <input id="picker" type="file" accept="video/*,.mp4,.mov,.webm,.mkv" multiple hidden>
 <p id="note" hidden>このブラウザは WebCodecs 非対応のため、互換モード（低速）で変換します。</p>
+<div id="bulk" hidden>
+  <span id="bulkInfo"></span>
+  <button id="bulkBtn" disabled>まとめてZIPでダウンロード</button>
+</div>
 <div id="list"></div>
 </body></html>

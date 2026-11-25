@@ -13,3 +13,6 @@ h1{font-size:1.4rem}
 .dl{display:inline-block;padding:6px 12px;background:#0a84ff;color:#fff;border-radius:8px;text-decoration:none}
 #note{background:#ff9f0a33;padding:8px 12px;border-radius:8px}
 small{opacity:.7}
+#bulk{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:16px;padding:12px;border-radius:10px;background:#0a84ff18;border:1px solid #0a84ff66}
+#bulkBtn{padding:8px 14px;font-weight:600;background:#0a84ff;color:#fff;border:0;border-radius:8px;cursor:pointer}
+#bulkBtn:disabled{opacity:.4;cursor:not-allowed}

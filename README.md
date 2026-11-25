@@ -1,4 +1,4 @@
-# Video Fixer
+# Google Pixel to mac Video Fixer
 VP9 mp4（Pixel / Google フォト）を H.264 + AAC に変換するブラウザ完結ツール。
 - 開発: `npm i && npm run dev` / ビルド: `npm run build`（出力 `docs/`）
 - GitHub Pages: Settings → Pages → main /docs
